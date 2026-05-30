@@ -1,6 +1,9 @@
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};
-use std::os::unix::fs::OpenOptionsExt;
+use std::os::unix::fs::{FileTypeExt, OpenOptionsExt};
+use std::os::unix::io::AsRawFd;
+
+const BLKGETSIZE64: libc::c_int = 0x80081272u32 as libc::c_int;
 
 /// Linux swap-space version implemented by this library.
 pub const SWAP_VERSION: u32 = 1;
@@ -280,15 +283,22 @@ pub fn check_blocks(
 /// Determine the usable size of a device or file.
 pub fn get_size(devname: &str, offset: u64, file: bool, filesz: u64) -> Result<u64, SwapError> {
     if file && filesz > 0 {
-        Ok(filesz)
-    } else {
-        let f = File::open(devname)?;
-        let size = f.metadata()?.len();
-        if offset > size {
-            return Err("offset larger than file size".into());
-        }
-        Ok(size - offset)
+        return Ok(filesz);
     }
+    let f = File::open(devname)?;
+    let meta = f.metadata()?;
+    let mut size = meta.len();
+    if size == 0 && meta.file_type().is_block_device() {
+        let mut bsz: u64 = 0;
+        let rc = unsafe { libc::ioctl(f.as_raw_fd(), BLKGETSIZE64, &mut bsz as *mut u64) };
+        if rc == 0 {
+            size = bsz;
+        }
+    }
+    if offset > size {
+        return Err("offset larger than file size".into());
+    }
+    Ok(size - offset)
 }
 
 /// Open a device or create a swap file.
