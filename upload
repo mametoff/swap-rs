@@ -2,7 +2,7 @@
 set -e
 
 eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/minios-github
+ssh-add ~/.ssh/github
 
 git add -A
 

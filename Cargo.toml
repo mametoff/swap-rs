@@ -1,10 +1,10 @@
 [package]
 name = "swap-rs"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 description = "A library for creating Linux swap areas (SWAPSPACE2 format)"
 authors = ["Oleksandr Mametov"]
-repository = "https://github.com/anomalyco/swap-rs"
+repository = "https://github.com/mametoff/swap-rs"
 license = "MIT"
 keywords = ["swap", "mkswap", "linux", "swapspace"]
 categories = ["command-line-utilities", "filesystem"]
